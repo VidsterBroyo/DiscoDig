@@ -39,6 +39,8 @@ DDbutton.onclick = openDD
 // create DD modal
 const discoDig = document.createElement("span");
 discoDig.id = "discoDigModal";
+const gifPath = chrome.runtime.getURL('imgs/buldozer.gif');
+
 discoDig.innerHTML = `
 <style>
 .modebar{
@@ -106,6 +108,29 @@ discoDig.innerHTML = `
     color: white;
     text-align: center;
 }
+
+#Buldozer {
+    position: relative;
+    overflow: hidden;
+    height: 100px; /* Adjust to your gif height */
+}
+
+#Buldozer img {
+    position: absolute;
+    animation: moveBuldozer 10s linear infinite;
+    height: 100%; /* Match container height */
+    transform: scaleX(-1);
+}
+
+@keyframes moveBuldozer {
+    0% {
+        left: -200px; /* Adjust based on gif width */
+    }
+    100% {
+        left: 100%;
+    }
+}
+
 </style>
 
 <div id="DDContainer">
@@ -127,8 +152,12 @@ discoDig.innerHTML = `
         <br>
         <div id="timeGraph">
         </div>
+    
     </div>
-
+    <br>
+        <div id="Buldozer">
+                <img src="${gifPath}" alt="bulldozer gif" />
+        </div>
   </div>
 </div>`
     ;

@@ -20,7 +20,7 @@
   ],
   "web_accessible_resources": [
   {
-    "resources": ["libs/plotly.js", "libs/wordcloud2.js"],
+    "resources": ["libs/plotly.js", "libs/wordcloud2.js", "imgs/buldozer.gif"],
     "matches": ["<all_urls>"]
   }]
   
