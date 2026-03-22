@@ -1,4 +1,4 @@
-gets fun n interesting stats from a discord dm or groupchat   
+gets fun & interesting stats from a discord dm or groupchat   
 check out the [chrome extensions page](https://chromewebstore.google.com/detail/discodig/jdmfjjgfcajnfgibhmbacgfiiikbddoc)   
 
 to run it yourself:
