@@ -40,6 +40,8 @@ interface userData {
     allMessages: string[],
     /** top 10 used words by user */
     mostUsedWords: { word: string, freq: number }[],
+    /** top 10 used emojis by user */
+    mostUsedEmojis: { emoji: string, freq: number }[],
     /** average # of characters in user's msgs */
     avgMsgLength: number,
     /** number of msgs sent */
@@ -286,12 +288,20 @@ input::-webkit-inner-spin-button {
 }
 
 
-#pieChartContainer, #userProfile, #wordCloud {
+#pieChartContainer, #wordCloud {
     margin: 5px;
     background-color: rgb(74, 61, 214);
     height: 400px;
     border-radius: 10px;
     overflow: hidden;
+}
+
+#userProfile {
+    margin: 5px;
+    background-color: rgb(74, 61, 214);
+    min-height: 400px;
+    border-radius: 10px;
+    overflow: visible;
 }
 
 #pieChartContainer {
@@ -371,15 +381,20 @@ input::-webkit-inner-spin-button {
 #userProfileBody {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+}
+
+#userProfileBody #topTenWords,
+#userProfileBody #topTenEmojis {
+    width: 30%;
 }
 
 #userProfileBody #topTenWords {
-    width: 40%;
+    padding-bottom: 20px;
 }
 
 #userProfileBody #userGeneralStats {
-    width: 60%
+    width: 40%
 }
 
 #userProfile p, #userProfile ol {
@@ -525,7 +540,13 @@ input::-webkit-inner-spin-button {
 
             <div id="userProfileBody">
                 <div id="topTenWords">
+                    <h4 class="subheading" style="font-size: 20px">Top Words</h4>
                     <ol id="userTopWords"></ol>
+                </div>
+
+                <div id="topTenEmojis">
+                    <h4 class="subheading" style="font-size: 20px">Top Emojis</h4>
+                    <ol id="userTopEmojis"></ol>
                 </div>
 
                 <div id="userGeneralStats">
@@ -970,16 +991,25 @@ function displayMsgShare() {
 }
 
 
-function calculateTopTenWordsPerUser() {
+/** Extract emojis from text using regex */
+function extractEmojis(text: string): string[] {
+    const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+    return text.match(emojiRegex) || [];
+}
 
+function calculateTopTenWordsAndEmojisPerUser() {
     // go through each user's userData
     mappedMessages.forEach((userData) => {
 
         // generate an array of words used by the user
-        const userWords: string[] = userData.allMessages.join(" ").replace(/[!"’#$%&'()*+,-./:;<=>?@[\]^_`{|}~]/g, '').toLowerCase().split(" ").filter(word => (!stopwords.has(word) && !word.startsWith("https") && word != ""));
+        const userWords: string[] = userData.allMessages.join(" ").replace(/[!"'#$%&'()*+,-./:;<=>?@[\]^_`{|}~]/g, '').toLowerCase().split(" ").filter(word => (!stopwords.has(word) && !word.startsWith("https") && word != ""));
 
-        // frequency map the words & pings (word/ping: frequency)
+        // get all emojis used by the user
+        const userEmojis: string[] = userData.allMessages.flatMap(msg => extractEmojis(msg));
+
+        // frequency map the words, emojis & pings
         const mappedWords: Map<string, number> = new Map();
+        const mappedEmojis: Map<string, number> = new Map();
         const mappedPings: Map<string, number> = new Map();
 
         userWords.forEach((word) => {
@@ -1018,12 +1048,17 @@ function calculateTopTenWordsPerUser() {
         }
 
 
+        // Count emoji frequencies
+        userEmojis.forEach(emoji => {
+            mappedEmojis.set(emoji, (mappedEmojis.get(emoji) || 0) + 1);
+        });
+
         // get handle for user's mostUsedWords list
         const topWords = userData.mostUsedWords
+        const topEmojis = userData.mostUsedEmojis
 
         // go through each word to determine top 10 list
         mappedWords.forEach((freq, word) => {
-
             // find where the word fits into user's the topWords
             let i = 9
             while (freq > topWords[i].freq) {
@@ -1040,6 +1075,25 @@ function calculateTopTenWordsPerUser() {
                 topWords.pop()
             }
         });
+
+        // go through each emoji to determine top 10 list
+        mappedEmojis.forEach((freq, emoji) => {
+            // find where the emoji fits into user's topEmojis
+            let i = 9
+            while (freq > topEmojis[i].freq) {
+                i--;
+                if (i < 0) {
+                    break
+                }
+            }
+
+            // check if while loop ran,
+            // then insert the emoji
+            if (i < 9) {
+                topEmojis.splice(i + 1, 0, { emoji: emoji, freq: freq })
+                topEmojis.pop()
+            }
+        });
     });
 }
 
@@ -1047,16 +1101,27 @@ function calculateTopTenWordsPerUser() {
 function displayUserProfile() {
     const selectedUserData: userData = mappedMessages.get(userSelect.value)!
     const topWords = selectedUserData.mostUsedWords
+    const topEmojis = selectedUserData.mostUsedEmojis
 
     userProfilePic.src = `https://cdn.discordapp.com/avatars/${userSelect.value}/${selectedUserData.avatarID}.webp?size=100`
 
-    // display rankings
+    // display word rankings
     userTopWordsDisplay.innerHTML = ""
     for (const [i, wordObject] of topWords.entries()) {
         if (wordObject.freq == 0) {
             break
         }
         userTopWordsDisplay.innerHTML += ` <li>${i + 1}. ${wordObject.word} (${wordObject.freq})</li>`
+    }
+
+    // display emoji rankings
+    const userTopEmojisDisplay = document.getElementById("userTopEmojis")!
+    userTopEmojisDisplay.innerHTML = ""
+    for (const [i, emojiObject] of topEmojis.entries()) {
+        if (emojiObject.freq == 0) {
+            break
+        }
+        userTopEmojisDisplay.innerHTML += ` <li>${i + 1}. ${emojiObject.emoji} (${emojiObject.freq})</li>`
     }
 
     console.log("user's top words", topWords)
@@ -1163,6 +1228,7 @@ async function dig() {
                         avatarID: msg.author.avatar,
                         allMessages: [],
                         mostUsedWords: [{ word: "", freq: 0 }, { word: "", freq: 0 }, { word: "", freq: 0 }, { word: "", freq: 0 }, { word: "", freq: 0 }, { word: "", freq: 0 }, { word: "", freq: 0 }, { word: "", freq: 0 }, { word: "", freq: 0 }, { word: "", freq: 0 }],
+                        mostUsedEmojis: [{ emoji: "", freq: 0 }, { emoji: "", freq: 0 }, { emoji: "", freq: 0 }, { emoji: "", freq: 0 }, { emoji: "", freq: 0 }, { emoji: "", freq: 0 }, { emoji: "", freq: 0 }, { emoji: "", freq: 0 }, { emoji: "", freq: 0 }, { emoji: "", freq: 0 }],
                         avgMsgLength: 0,
                         numberOfMessages: 0,
                         avgReplyTime: [0, 0],
@@ -1246,7 +1312,7 @@ async function dig() {
 
     displayDayTimeGraph()
 
-    calculateTopTenWordsPerUser()
+    calculateTopTenWordsAndEmojisPerUser()
     displayUserProfile()
 
     calculateTopTenGifs()
