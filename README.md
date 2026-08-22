@@ -1,6 +1,9 @@
-gets fun & interesting stats from a discord dm or groupchat   
-check out the [chrome extensions page](https://chromewebstore.google.com/detail/discodig/jdmfjjgfcajnfgibhmbacgfiiikbddoc)   
-200+ installs     
+- reads a user's Discord DM or GC and provides cool stats   
+- try it out yourself [here](https://chromewebstore.google.com/detail/discodig/jdmfjjgfcajnfgibhmbacgfiiikbddoc)   
+- 400+ installs     
+
+<video src="https://github.com/user-attachments/assets/c7a3f262-97a7-4e62-8f3d-880304c0c2f4" controls width="100%">
+</video>
 
 to run it yourself:
 1. `npm install`
